@@ -6,7 +6,7 @@
 rm(list = ls())               #removing any variables in R's memory
 
 #Model Inputs
-n.i <- 5                 #Number of individuals
+n.i <- 2000                 #Number of individuals
 ini_age <- 40                 #Start Age of Cohort
 end_age <- 100                #Simulation End Age
 cl <- 1                       #Cycle Length in years
