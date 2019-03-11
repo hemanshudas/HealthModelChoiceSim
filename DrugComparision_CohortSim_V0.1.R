@@ -6,10 +6,11 @@ rm(list = ls())               # removing any variables in R's memory
 #Model Inputs
 ini_age <- 40                 #Start Age of Cohort
 end_age <- 100                #Simulation End Age
+co_size <- 1000               #Size of the cohort
 cl <- 1                       #Cycle Length in years
 v.n <- c("W","E","U","D")     #Model States: W-Well, E-Event, U-Unwell, D-Dead
 n.s <- length(v.n)            #Number of model states
-v.M_1 <- c(1000,0,0,0)        #Everyone is Well at the start
+v.M_1 <- c(co_size,0,0,0)        #Everyone is Well at the start
 v.Str <- c("Drug A","Drug B") #Storing the Strategy Indicator
 n.t <- end_age - ini_age      #Simulation cycles
 
