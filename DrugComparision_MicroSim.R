@@ -6,7 +6,7 @@
 rm(list = ls())               #removing any variables in R's memory
 
 #Model Inputs
-n.i <- 2000                 #Number of individuals
+n.i <- 1000                 #Number of individuals
 ini_age <- 40                 #Start Age of Cohort
 end_age <- 100                #Simulation End Age
 cl <- 1                       #Cycle Length in years
@@ -27,7 +27,7 @@ p.ED <- 0.4                   #Probability of death when event
 
 #Intiatlization of Cost for each state
 c.W <- 0                      #cost of being well
-c.E <- 5000                   #cost of event occuring
+c.E <- 3000                   #cost of event occuring
 ##c.U <- 2000                 #cost of staying unwell (treatment)
 c.D <- 0                      #cost of being dead
 
