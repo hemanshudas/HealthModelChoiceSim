@@ -73,8 +73,8 @@ for (i in 2:(n.t+1))
 tc <- m.TR %*% v.c            #Calculating the Costs
 tu <- m.TR %*% v.u            #Calculating the QALYs
 
-t_tc <- t(tc) %*% v.dwc       #Total Cost
-t_tu <- t(tu) %*% v.dwu       #Total QALY
+t_tc <- (t(tc) %*% v.dwc) / co_size      #Total Cost per individual
+t_tu <- (t(tu) %*% v.dwu) / co_size      #Total QALY per individual
 
 results <- list(m.TR = m.TR,t_tc = t_tc, t_tu = t_tu)
 return(results)

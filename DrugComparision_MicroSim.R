@@ -83,8 +83,8 @@ for (i in 1:n.i) {
 tc <- m.C %*% v.dwc           #Calculating the Costs
 tu <- m.U %*% v.dwu           #Calculating the QALYs
 
-tc_hat <- mean(tc)            #Average Cost
-tu_hat <- mean(tu)            #Average QALY
+tc_hat <- mean(tc) / n.i          #Average Cost per individual
+tu_hat <- mean(tu) / n.i          #Average QALY per individual
 
 #Optional Matrix of Transitions between states
 if (TS.out == TRUE) {
