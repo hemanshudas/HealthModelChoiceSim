@@ -2,11 +2,11 @@
 #### Created: Tue, 8 March 2019
 #### The code is an implementation of the microsimulation model to emulate individuals through state-level transitions
 
-
 rm(list = ls())               #removing any variables in R's memory
+options(max.print=10000)
 
 #Model Inputs
-n.i <- 1000                 #Number of individuals
+n.i <- 10000                 #Number of individuals
 ini_age <- 40                 #Start Age of Cohort
 end_age <- 100                #Simulation End Age
 cl <- 1                       #Cycle Length in years
@@ -17,7 +17,7 @@ v.Str <- c("Drug A","Drug B") #Storing the Strategy Indicator
 n.t <- end_age - ini_age      #Simulation cycles
 
 #Initialization of Transition Probabilities
-p.WE <- 0.05                  #Probability of event when well
+p.WE <- 0.08                 #Probability of event when well
 p.WU <- 0                 #Probability of unwell when well
 p.WD <- 0.005                  #Probability of death when well
 p.ED <- 0.4                   #Probability of death when event
@@ -27,26 +27,26 @@ p.ED <- 0.4                   #Probability of death when event
 
 #Intiatlization of Cost for each state
 c.W <- 0                      #cost of being well
-c.E <- 3000                   #cost of event occuring
+c.E <- 0                   #cost of event occuring
 ##c.U <- 2000                 #cost of staying unwell (treatment)
 c.D <- 0                      #cost of being dead
 
 #Intialization of Utility for each state
 u.W <- 1                      #utility of being well
-u.E <- 0.3                    #utility during event state
+u.E <- 0.9                    #utility during event state
 u.U <- 0.9                    #utility of staying unwell
 u.D <- 0                      #utility of being dead
 
 #Characteristics of Drug A
-p.UD_A <- 0.02
-c.U_A <- 2000
+p.UD_A <- 0.1
+c.U_A <- 4000
 
 #Characteristics of Drug B
 p.UD_B <- 0.4
-c.U_B <- 1800
+c.U_B <- 2000
 
 ####Function to simulate the markov cycle tree
-MicroSim <- function(p.UD,c.U,TS.out = TRUE,TR.out=TRUE,seed=1) { 
+MicroSim <- function(p.WE,p.UD,c.U,TS.out = TRUE,TR.out=TRUE,seed=1) { 
 #Arguments:
           #TS.out:  Flag for matrix of transitions between states
           #TR.out:  Flag for microsimulation trace
@@ -68,7 +68,7 @@ for (i in 1:n.i) {
           m.U[i,1] <- Util(m.M[i,1])              #QALY per individual for initial health state
           
           for (t in 1:n.t) {
-                    v.p <- Probs(m.M[i,t],p.UD)        #Transition probabilities at cycle t
+                    v.p <- Probs(p.WE,m.M[i,t],p.UD)        #Transition probabilities at cycle t
                     
                     m.M[i, t+1] <- sample(v.n, prob = v.p, size =1)   #Sample the next health state
                     m.C[i, t+1] <- Cost(m.M[i,t+1],c.U)               #Costs per individual at cycle t+1
@@ -83,8 +83,8 @@ for (i in 1:n.i) {
 tc <- m.C %*% v.dwc           #Calculating the Costs
 tu <- m.U %*% v.dwu           #Calculating the QALYs
 
-tc_hat <- mean(tc) / n.i          #Average Cost per individual
-tu_hat <- mean(tu) / n.i          #Average QALY per individual
+tc_hat <- mean(tc)            #Average Cost per individual
+tu_hat <- mean(tu)            #Average QALY per individual
 
 #Optional Matrix of Transitions between states
 if (TS.out == TRUE) {
@@ -111,16 +111,16 @@ return(results)
 }                             #End of the MicroSim Function
 
 ####Probability Function to update the transition probabilities of every cycle
-Probs <- function(M.it,p.UD) {
+Probs <- function(p.WE,M.it,p.UD) {
           #M.it:    Health state occupied by individual i at cycle t
           #p.UD:    Probability of death when unwell due to event
           
           v.p.it <- rep(NA,n.s)                                       #Vector of transition probabilities
           names(v.p.it) <- v.n                                        #Naming the vector
           
-          v.p.it[M.it == "W"] <- c(1-(p.WE+p.WU+p.WD),p.WE,p.WU,p.WD) #tranistion probability when well
-          v.p.it[M.it == "E"] <- c(0,0,1-(p.ED+p.WD),p.ED+p.WD)       #transition probability when event occurs
-          v.p.it[M.it == "U"] <- c(0,0,1-(p.UD+p.WD),p.UD+p.WD)       #transition probability when unwell
+          v.p.it[M.it == "W"] <- c(1-(((1-p.WD)*p.WE)+p.WD),p.WE*(1-p.WD),0,p.WD) #tranistion probability when well
+          v.p.it[M.it == "E"] <- c(0,0,1-((1-p.WD)*p.ED + p.WD),p.ED*(1-p.WD) + p.WD)       #transition probability when event occurs
+          v.p.it[M.it == "U"] <- c(0,0,1-((1-p.WD)*p.UD + p.WD),p.UD*(1-p.WD)+p.WD)       #transition probability when unwell
           v.p.it[M.it == "D"] <- c(0,0,0,1)                           #transition probability when death
           return(v.p.it)                                              #returning probabilities
 }
@@ -152,21 +152,48 @@ Util <- function (M.it) {
 }
 
 #### Running the simulation
-sim_drugA <- MicroSim(p.UD_A,c.U_A)
-sim_drugB <- MicroSim(p.UD_B,c.U_B)
+j <- 1                                            #Counter Initiation
+p.WEv <- c(0.01,0.05,0.1,0.15,0.2,0.25,0.35,0.45,0.5,0.75,0.9,1)
+C_diff <- U_diff <- ICER <- rep(0,12)
+sum_res <- matrix(nrow = 12, ncol = 8, 
+                  dimnames = list(paste("Scenario",1:12,sep = " "),c("Event Probability","Cost_A","Cost_B","QALY_A","QALY_B","Delta Cost","Delta_QALY","ICER")))
+for (j in 1:12) {
+          
+          sim_drugA <- MicroSim(p.WEv[j],p.UD_A,c.U_A)
+          sim_drugB <- MicroSim(p.WEv[j],p.UD_B,c.U_B)
+          
+          #Calculating the comparision between the drugs
+          v.C <- c(sim_drugA$tc_hat,sim_drugB$tc_hat)
+          v.U <- c(sim_drugA$tu_hat,sim_drugB$tu_hat)
+          C_diff[j] <- v.C[1]-v.C[2]
+          U_diff[j] <- v.U[1]-v.U[2]
+          ICER[j] <- C_diff[j]/U_diff[j]          #Incremental Cost Effectiveness Ratio
+          
+          # Summarizing Data in a Table
+          sum_res[j,1] <- p.WEv[j]
+          sum_res[j,2] <- v.C[1]
+          sum_res[j,3] <- v.C[2]
+          sum_res[j,4] <- v.U[1]
+          sum_res[j,5] <- v.U[2]
+          sum_res[j,6] <- C_diff[j]
+          sum_res[j,7] <- U_diff[j]
+          sum_res[j,8] <- ICER[j]
+          
+          j <- j+1
+          
+}
 
-#Calculating the comparision between the drugs
-v.C <- c(sim_drugA$tc_hat,sim_drugB$tc_hat)
-v.U <- c(sim_drugA$tu_hat,sim_drugB$tu_hat)
-
-ICER <- (v.C[2]-v.C[1])/(v.U[2]-v.U[1])                     #Incremental Cost Effectiveness Ratio
-
+par(mfrow=c(3,1)) 
+plot(p.WEv,C_diff,type = "p")
+plot(p.WEv,U_diff,type = "p")
+plot(p.WEv,ICER,type = "p")
 #Data Presentation
-table_microsim <- data.frame(
-          round(v.C, 0),              # costs per arm
-          v.U,              # health outcomes per arm
-          c("", round(ICER, 3))       # ICER
-)
-rownames(table_microsim) = v.Str  # name the rows
-colnames(table_microsim) = c("Costs", "QALYs", "ICER") # name the columns
-table_microsim                    # print the table 
+#table_microsim <- data.frame(
+#          round(v.C, 0),              # costs per arm
+#          v.U,              # health outcomes per arm
+#          c("", round(ICER, 3))       # ICER
+#)
+#rownames(table_microsim) = v.Str  # name the rows
+#colnames(table_microsim) = c("Costs", "QALYs", "ICER") # name the columns
+#table_microsim                    # print the table 
+
