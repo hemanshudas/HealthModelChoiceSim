@@ -81,12 +81,12 @@ return(results)
 }
 
 #### Running the simulation
-p.UDA <- 0.02
+p.UDA <- 0
 c.UA <- 2000
 sim_markov_drugA <- Markov(v.M_1,n.t,p.UDA,c.UA)
 
-p.UDB <-0.4
-c.UB <- 1800
+p.UDB <-0.8
+c.UB <- 20
 sim_markov_drugB <- Markov(v.M_1,n.t,p.UDB,c.UB)
 
 v.C <- c(sim_markov_drugA$t_tc,sim_markov_drugB$t_tc)       #Vector for capturing cost for both
