@@ -1,4 +1,4 @@
-#### Markov Cycle Tree Simulation
+#### Microsimulation Simulation
 #### Created: Tue, 8 March 2019
 #### The code is an implementation of the microsimulation model to emulate individuals through state-level transitions
 
@@ -38,7 +38,7 @@ u.U <- 0.9                    #utility of staying unwell
 u.D <- 0                      #utility of being dead
 
 #Characteristics of Drug A
-p.UD_A <- 0.1
+# p.UD_A <- 0.1
 c.U_A <- 4000
 
 #Characteristics of Drug B
@@ -151,16 +151,52 @@ Util <- function (M.it) {
           return(QALY)                            #Returning costs
 }
 
-#### Running the simulation
+#### Running the simulation to compare effect of event simulation
+# j <- 1                                            #Counter Initiation
+# p.WEv <- c(0.01,0.05,0.1,0.15,0.2,0.25,0.35,0.45,0.5,0.75,0.9,1)
+# p.UD_A <- 0.1
+# C_diff <- U_diff <- ICER <- rep(0,12)
+# sum_res <- matrix(nrow = 12, ncol = 8, 
+#                   dimnames = list(paste("Scenario",1:12,sep = " "),c("Event Probability","Cost_A","Cost_B","QALY_A","QALY_B","Delta Cost","Delta_QALY","ICER")))
+# for (j in 1:12) {
+#           
+#           sim_drugA <- MicroSim(p.WEv[j],p.UD_A,c.U_A)
+#           sim_drugB <- MicroSim(p.WEv[j],p.UD_B,c.U_B)
+#           
+#           #Calculating the comparision between the drugs
+#           v.C <- c(sim_drugA$tc_hat,sim_drugB$tc_hat)
+#           v.U <- c(sim_drugA$tu_hat,sim_drugB$tu_hat)
+#           C_diff[j] <- v.C[1]-v.C[2]
+#           U_diff[j] <- v.U[1]-v.U[2]
+#           ICER[j] <- C_diff[j]/U_diff[j]          #Incremental Cost Effectiveness Ratio
+#           
+#           # Summarizing Data in a Table
+#           sum_res[j,1] <- p.WEv[j]
+#           sum_res[j,2] <- v.C[1]
+#           sum_res[j,3] <- v.C[2]
+#           sum_res[j,4] <- v.U[1]
+#           sum_res[j,5] <- v.U[2]
+#           sum_res[j,6] <- C_diff[j]
+#           sum_res[j,7] <- U_diff[j]
+#           sum_res[j,8] <- ICER[j]
+#           
+#           j <- j+1
+#           
+# }
+
+#### Running the simulation to compare effect of drug effectiveness
 j <- 1                                            #Counter Initiation
-p.WEv <- c(0.01,0.05,0.1,0.15,0.2,0.25,0.35,0.45,0.5,0.75,0.9,1)
-C_diff <- U_diff <- ICER <- rep(0,12)
-sum_res <- matrix(nrow = 12, ncol = 8, 
-                  dimnames = list(paste("Scenario",1:12,sep = " "),c("Event Probability","Cost_A","Cost_B","QALY_A","QALY_B","Delta Cost","Delta_QALY","ICER")))
-for (j in 1:12) {
+p.WEv <- 0.15
+p.UD_A <- c(0,0.01,0.05,0.1,0.15,0.2,0.3,0.4)
+len <- length(p.UD_A)
+C_diff <- U_diff <- ICER <- rep(0,len)
+sum_res <- matrix(nrow = len, ncol = 8, 
+                  dimnames = list(paste("Scenario",1:len,sep = " "),
+                                  c("Death despite Drug Probability","Cost_A","Cost_B","QALY_A","QALY_B","Delta Cost","Delta_QALY","ICER")))
+for (j in 1:len) {
           
-          sim_drugA <- MicroSim(p.WEv[j],p.UD_A,c.U_A)
-          sim_drugB <- MicroSim(p.WEv[j],p.UD_B,c.U_B)
+          sim_drugA <- MicroSim(p.WEv,p.UD_A[j],c.U_A)
+          sim_drugB <- MicroSim(p.WEv,p.UD_B,c.U_B)
           
           #Calculating the comparision between the drugs
           v.C <- c(sim_drugA$tc_hat,sim_drugB$tc_hat)
@@ -170,7 +206,7 @@ for (j in 1:12) {
           ICER[j] <- C_diff[j]/U_diff[j]          #Incremental Cost Effectiveness Ratio
           
           # Summarizing Data in a Table
-          sum_res[j,1] <- p.WEv[j]
+          sum_res[j,1] <- p.UD_A[j]
           sum_res[j,2] <- v.C[1]
           sum_res[j,3] <- v.C[2]
           sum_res[j,4] <- v.U[1]
@@ -183,10 +219,10 @@ for (j in 1:12) {
           
 }
 
-par(mfrow=c(3,1)) 
-plot(p.WEv,C_diff,type = "p")
-plot(p.WEv,U_diff,type = "p")
-plot(p.WEv,ICER,type = "p")
+par(mfrow=c(3,1))
+plot(p.UD_A,C_diff,type = "p")
+plot(p.UD_A,U_diff,type = "p")
+plot(p.UD_A,ICER,type = "p")
 #Data Presentation
 #table_microsim <- data.frame(
 #          round(v.C, 0),              # costs per arm
